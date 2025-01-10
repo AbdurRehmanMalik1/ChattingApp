@@ -4,7 +4,11 @@
     <script>
       const sender_id = "677e47eb47c47ba7a39b9a2e"; 
       const chat_id = "677ea89d167f4bcf2a423e4b";
-      const socket = io('http://localhost:8080');
+      const socket = io('http://localhost:8080', {
+        auth: {
+          token: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzdlNDdlYjQ3YzQ3YmE3YTM5YjlhMmUiLCJuYW1lIjoiQWJkdXIgUmVobWFuIiwiZW1haWwiOiJhYmR1cnJlaG1hbjQ0MTVAZ21haWwuY29tIiwiaWF0IjoxNzM2NTMwOTUxLCJleHAiOjE3MzY1MzgxNTF9.r3AqpADWV0nr_11m6WLaWvb0v6XIuv29e4aUzbmEz9A'
+        }
+      });
       socket.on('connect', function() {
         console.log('Connected');
         socket.emit('sendAdditionalInfo', { sender_id,chat_id});
@@ -12,6 +16,9 @@
           console.log('Identity:', response),
         );
       });
+      socket.on('unauthorized' ,(data)=>{
+        console.log(data);
+      })
       socket.on('events', function(data) {
         console.log('event', data);
       });

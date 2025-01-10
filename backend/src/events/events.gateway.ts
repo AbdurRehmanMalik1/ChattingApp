@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { HttpStatus, Injectable, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io'
+import { AuthGuard } from 'src/auth/auth-guard';
+import { jwtConstants } from 'src/auth/constants';
+import { WsJwtAuthGuard } from 'src/auth/ws-auth-guard';
 import { Chat } from 'src/chat/chat-model';
 import { ChatService } from 'src/chat/chat-service';
 import { Message } from 'src/chat/message-model';
@@ -19,13 +23,30 @@ export class EventsGateway {
     constructor(
         readonly chatService:ChatService,
         readonly messageService:MessageService,
+        readonly jwtService :JwtService,
     ){}
     //user socket and socket_id
     private connectedUsers: Map<String, Socket> = new Map();
     //Chat Room Id , Key Value of Pair of User ID with their socket id
     private chatRooms : Map<string, Map<string,string>> = new Map(); 
 
-    handleConnection(client: Socket) {
+    async handleConnection(client: Socket, ...args: any[]) {
+        const token = this.extractTokenFromHeader(client);
+        if (!token) {
+          client.emit('unauthorized', { message: 'JWT token missing' });
+          client.disconnect();
+          return;
+        }
+        try {
+          const payload = await this.jwtService.verifyAsync(token, {
+            secret: jwtConstants.secret,
+          });
+          client['user'] = payload;
+        } catch (error) {
+          client.emit('unauthorized', { message: 'Invalid JWT Token' });
+          client.disconnect();
+          return;
+        }
         console.log(`Client connected: ${client.id}`);
         this.connectedUsers.set(client.id, client); // Add the socket to the list
     }
@@ -44,6 +65,7 @@ export class EventsGateway {
         this.connectedUsers.delete(client.id);  // Remove the socket from the list
         console.log(`Client ${client.id} removed from connected users list.`);
     }
+
     @SubscribeMessage('sendAdditionalInfo')
     async handleRetrieveInfo(@ConnectedSocket() client : Socket , @MessageBody() data: { sender_id: string,chat_id:string }): Promise<any> {
         // console.log('Retrieve additional info for user:');
@@ -71,7 +93,6 @@ export class EventsGateway {
 
     @SubscribeMessage('events')
     async handleEvent(@MessageBody() eventBody: { message: Message , chat_id:string}): Promise<any> {
-        console.log(eventBody);
         await this.chatService.arePartOfChat(
             eventBody.chat_id,
             eventBody.message.sender_id,
@@ -81,7 +102,6 @@ export class EventsGateway {
     }
     @SubscribeMessage('send-message')
     async handleSendMessage(@ConnectedSocket() client : Socket , @MessageBody() messagePayLoad: { message: Message , chat_id:string}): Promise<any> {
-        console.log(messagePayLoad);
         const {content, sender_id , receiver_id, message_type} = messagePayLoad.message;
         const chat_id : string = messagePayLoad.chat_id;
         await this.chatService.arePartOfChat(
@@ -116,11 +136,12 @@ export class EventsGateway {
                 }
             }
         }
-
-        
-        console.log("Yes users are part of chat now implement the send message");
-        
-
         return createdMessage;
+    }
+
+
+    private extractTokenFromHeader(client: Socket): string {
+        const authHeadertoken = client.handshake.auth.token;
+        return authHeadertoken ? authHeadertoken.split(' ')[1] : null;
     }
 }
