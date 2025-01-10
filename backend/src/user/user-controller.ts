@@ -1,17 +1,35 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  BadRequestException, 
+  UseGuards,
+  Request,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserService } from './user-service';
+import { User } from './user-model';
+import { AuthGuard } from 'src/auth/auth-guard';
+
+
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  createUser(@Body() userDetails: { name: string, email: string }) {
-    return this.userService.createUser(userDetails.name,userDetails.email);
-  }
-
+  @HttpCode(HttpStatus.OK)
   @Get()
   findAll() {
     return this.userService.findAll();
   }
+
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  @Get('/profile')
+  getProfile(@Request() req ){
+    return req.user;
+  }
+ 
 }
