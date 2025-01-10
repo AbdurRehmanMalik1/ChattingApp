@@ -3,6 +3,7 @@ import { CanActivate, ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import { jwtConstants } from './constants';  // Path to your jwt constants file
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class WsJwtAuthGuard implements CanActivate {
@@ -10,7 +11,7 @@ export class WsJwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     console.log("canActivate is being called");
-    const client = context.switchToWs().getClient();  // Get the WebSocket client
+    const client : Socket = context.switchToWs().getClient();  // Get the WebSocket client
     const token = this.extractTokenFromHeader(client);  // Extract token from WebSocket handshake
 
     if (!token) {
@@ -29,8 +30,8 @@ export class WsJwtAuthGuard implements CanActivate {
     return true;
   }
 
-  private extractTokenFromHeader(client: any): string | undefined {
-    const token = client.handshake.query.token || client.handshake.headers['authorization'];
-    return token ? token.replace('Bearer ', '') : undefined;
+   private extractTokenFromHeader(client: Socket): string {
+      const authHeadertoken = client.handshake.auth.token;
+      return authHeadertoken ? authHeadertoken.split(' ')[1] : null;
   }
 }

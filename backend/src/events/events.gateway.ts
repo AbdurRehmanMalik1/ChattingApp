@@ -30,6 +30,7 @@ export class EventsGateway {
     //Chat Room Id , Key Value of Pair of User ID with their socket id
     private chatRooms : Map<string, Map<string,string>> = new Map(); 
 
+
     async handleConnection(client: Socket, ...args: any[]) {
         const token = this.extractTokenFromHeader(client);
         if (!token) {
@@ -100,6 +101,8 @@ export class EventsGateway {
         );
         return eventBody;
     }
+
+    @UseGuards(WsJwtAuthGuard)
     @SubscribeMessage('send-message')
     async handleSendMessage(@ConnectedSocket() client : Socket , @MessageBody() messagePayLoad: { message: Message , chat_id:string}): Promise<any> {
         const {content, sender_id , receiver_id, message_type} = messagePayLoad.message;
@@ -109,6 +112,9 @@ export class EventsGateway {
             sender_id,
             receiver_id
         );
+        if(!content)
+            5;
+            //add emit incase of error
         const createdMessage  : Message = await this.messageService.createMessage(
             message_type || 'text',
             content,
