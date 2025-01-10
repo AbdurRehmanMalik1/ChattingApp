@@ -1,0 +1,81 @@
+<html>
+  <head>
+    
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
+    <script>
+      const sender_id = "677e47f547c47ba7a39b9a30"; 
+      const chat_id = "677ea89d167f4bcf2a423e4b";
+      const socket = io('http://localhost:8080');
+      socket.on('connect', function() {
+        console.log('Connected');
+        socket.emit('sendAdditionalInfo', { sender_id,chat_id});
+        socket.emit('identity', 0, response =>
+          console.log('Identity:', response),
+        );
+      });
+      socket.on('events', function(data) {
+        console.log('event', data);
+      });
+      socket.on('exception', function(data) {
+        console.log('event', data);
+      });
+      socket.on('disconnect', function() {
+        console.log('Disconnected');
+      });
+      socket.on('newMessage', (data)=>{
+        document.getElementById('message-area').innerHTML += `<div class="other-message">
+        SentBy:${data.sender_id} ${data.message.content}
+        </div>`;
+      });
+      function sendMessage(){
+        const messageBox = document.getElementById("message-box");
+        const receiverBox = document.getElementById("receiver-id-box");
+        const content = messageBox.value;
+        //const receiver_id = receiverBox.value;
+
+        // 677e47eb47c47ba7a39b9a2e
+        const receiver_id = "677e47eb47c47ba7a39b9a2e"; // Azwa
+        const messagePayLoad = {
+            message: {
+                sender_id,
+                content,
+                receiver_id
+            },
+            chat_id,
+        }
+        socket.emit('send-message', messagePayLoad,(data)=>{
+          console.log("Getting echo back");
+          console.log(data);
+          
+          document.getElementById('message-area').innerHTML += `<div class="my-message">${content}</div>`;
+        });
+      }
+    </script>
+     <style>
+        .message-area{
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+        }
+        .my-message{
+          margin-left: auto;
+          border: 1px solid black;
+        }
+        .other-message{
+          margin-right: auto;
+        }
+      </style>
+  </head>
+
+  <body style="width: 100%;">
+    <form style="width: 100%;">
+        <div>
+            <input type="text" id = "message-box"/>
+            <input type="text" id = "receiver-id-box"/>
+            <button type="button" onclick="sendMessage()"> Message</button>
+        </div>
+    </form>
+    <div class="message-area" id="message-area">
+    </div>
+  </body>
+</html>
