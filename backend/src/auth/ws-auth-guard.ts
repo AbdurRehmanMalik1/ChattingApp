@@ -10,7 +10,6 @@ export class WsJwtAuthGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    console.log("canActivate is being called");
     const client : Socket = context.switchToWs().getClient();  // Get the WebSocket client
     const token = this.extractTokenFromHeader(client);  // Extract token from WebSocket handshake
 

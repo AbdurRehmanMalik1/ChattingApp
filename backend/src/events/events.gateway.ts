@@ -1,8 +1,7 @@
-import { HttpStatus, Injectable, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { ArgumentsHost, BadRequestException, Catch, HttpStatus, Injectable, UnauthorizedException, UseFilters, UseGuards } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
+import { BaseWsExceptionFilter, ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io'
-import { AuthGuard } from 'src/auth/auth-guard';
 import { jwtConstants } from 'src/auth/constants';
 import { WsJwtAuthGuard } from 'src/auth/ws-auth-guard';
 import { Chat } from 'src/chat/chat-model';
@@ -10,6 +9,24 @@ import { ChatService } from 'src/chat/chat-service';
 import { Message } from 'src/chat/message-model';
 import { MessageService } from 'src/chat/message-service';
 
+
+@Catch(UnauthorizedException, BadRequestException)
+export class AllExceptionsFilter extends BaseWsExceptionFilter {
+  catch(exception: WsException, host: ArgumentsHost) {
+    const client = host.switchToWs().getClient();
+    
+    if (exception instanceof UnauthorizedException) {
+      client.emit('unauthorized', { status:HttpStatus.UNAUTHORIZED, message: 'Unauthorized access. Please check your credentials.' });
+      client.disconnect();
+    } else if (exception instanceof BadRequestException) {
+      client.emit('exception', { status:HttpStatus.BAD_REQUEST, message: 'Please check your input.' });
+    }
+
+    // Suppress the console log or handle the error without logging
+    // Do not propagate the exception further or log it to the console
+    return; // Return early to avoid logging it
+  }
+}
 
 @WebSocketGateway({
     cors: {
@@ -31,10 +48,12 @@ export class EventsGateway {
     private chatRooms : Map<string, Map<string,string>> = new Map(); 
 
 
+
+    @UseFilters(new AllExceptionsFilter())
     async handleConnection(client: Socket, ...args: any[]) {
         const token = this.extractTokenFromHeader(client);
         if (!token) {
-          client.emit('unauthorized', { message: 'JWT token missing' });
+          client.emit('unauthorized', {status:HttpStatus.UNAUTHORIZED, message: 'JWT token missing' });
           client.disconnect();
           return;
         }
@@ -44,7 +63,7 @@ export class EventsGateway {
           });
           client['user'] = payload;
         } catch (error) {
-          client.emit('unauthorized', { message: 'Invalid JWT Token' });
+          client.emit('unauthorized', {status:HttpStatus.UNAUTHORIZED, message: 'Invalid JWT Token' });
           client.disconnect();
           return;
         }
@@ -52,6 +71,7 @@ export class EventsGateway {
         this.connectedUsers.set(client.id, client); // Add the socket to the list
     }
 
+    @UseFilters(new AllExceptionsFilter())
     handleDisconnect(client: Socket) {
         console.log(`Client disconnected: ${client.id}`);
         // Iterate through chatRooms to find the chat the client belongs to
@@ -67,6 +87,8 @@ export class EventsGateway {
         console.log(`Client ${client.id} removed from connected users list.`);
     }
 
+
+    @UseFilters(new AllExceptionsFilter())
     @SubscribeMessage('sendAdditionalInfo')
     async handleRetrieveInfo(@ConnectedSocket() client : Socket , @MessageBody() data: { sender_id: string,chat_id:string }): Promise<any> {
         // console.log('Retrieve additional info for user:');
@@ -92,6 +114,7 @@ export class EventsGateway {
         }
     }
 
+    @UseFilters(new AllExceptionsFilter())
     @SubscribeMessage('events')
     async handleEvent(@MessageBody() eventBody: { message: Message , chat_id:string}): Promise<any> {
         await this.chatService.arePartOfChat(
@@ -102,6 +125,8 @@ export class EventsGateway {
         return eventBody;
     }
 
+
+    @UseFilters(new AllExceptionsFilter())
     @UseGuards(WsJwtAuthGuard)
     @SubscribeMessage('send-message')
     async handleSendMessage(@ConnectedSocket() client : Socket , @MessageBody() messagePayLoad: { message: Message , chat_id:string}): Promise<any> {
@@ -151,3 +176,5 @@ export class EventsGateway {
         return authHeadertoken ? authHeadertoken.split(' ')[1] : null;
     }
 }
+
+

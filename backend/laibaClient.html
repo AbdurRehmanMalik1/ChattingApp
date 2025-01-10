@@ -7,7 +7,7 @@
       const chat_id = "677ea89d167f4bcf2a423e4b";
       const socket = io('http://localhost:8080', {
         auth: {
-          token: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzdlNDdlYjQ3YzQ3YmE3YTM5YjlhMmUiLCJuYW1lIjoiQWJkdXIgUmVobWFuIiwiZW1haWwiOiJhYmR1cnJlaG1hbjQ0MTVAZ21haWwuY29tIiwiaWF0IjoxNzM2NTMwOTUxLCJleHAiOjE3MzY1MzgxNTF9.r3AqpADWV0nr_11m6WLaWvb0v6XIuv29e4aUzbmEz9A'
+          token: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzdlNDdlYjQ3YzQ3YmE3YTM5YjlhMmUiLCJuYW1lIjoiQWJkdXIgUmVobWFuIiwiZW1haWwiOiJhYmR1cnJlaG1hbjQ0MTVAZ21haWwuY29tIiwiaWF0IjoxNzM2NTM5OTU2LCJleHAiOjE3MzY1NDcxNTZ9.M-YoGQyhlzdB5bgb9EAzwKKrJ2UCP8T4FCQai5TdtmY'
         }
       });
       socket.on('connect' , function() {
@@ -24,7 +24,7 @@
         console.log('event', data);
       });
       socket.on('exception', function(data) {
-        console.log('event', data);
+        console.log('exception: ', data);
       });
       socket.on('disconnect', function() {
         console.log('Disconnected');
