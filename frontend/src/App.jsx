@@ -1,11 +1,10 @@
-
+import Login from "./Login"
 
 function App() {
 
-
   return (
     <>
-     <h1>Chatting App</h1>
+     <Login></Login>
     </>
   )
 }
