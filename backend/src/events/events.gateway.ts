@@ -169,6 +169,78 @@ export class EventsGateway {
         }
         return createdMessage;
     }
+    
+
+    @UseFilters(new AllExceptionsFilter())
+    @SubscribeMessage('offer')
+    async handleCallOffer(@ConnectedSocket() client : Socket, @MessageBody() offerBody: { offerSdp: string , chat_id:string , sender_id:string}): Promise<any> {
+        const {offerSdp,chat_id,sender_id} = offerBody;
+
+        if(this.chatRooms.has(chat_id)){
+            const userIdSocketMap : Map<String,String> = this.chatRooms.get(chat_id);
+            for(const [socketId,userId] of userIdSocketMap){
+                if (socketId !== client.id) {
+                    const recipientSocket = this.connectedUsers.get(socketId);
+                    if(recipientSocket)
+                        recipientSocket.emit('offer', { offerSdp, sender_id, chat_id });
+                }
+            }
+        }
+    }
+    @UseFilters(new AllExceptionsFilter())
+    @SubscribeMessage('answerOffer')
+    async handleAnswerOffer(@ConnectedSocket() client : Socket, @MessageBody() offerBody: { answerSdp: string , chat_id:string , sender_id:string}): Promise<any> {
+        const {answerSdp,chat_id,sender_id} = offerBody;
+
+        if(this.chatRooms.has(chat_id)){
+            const userIdSocketMap : Map<String,String> = this.chatRooms.get(chat_id);
+            for(const [socketId,userId] of userIdSocketMap){
+                if (socketId !== client.id) {
+                    const recipientSocket = this.connectedUsers.get(socketId);
+                    if(recipientSocket)
+                        recipientSocket.emit('answerOffer', { answerSdp, sender_id, chat_id });
+                }
+            }
+        }
+    }
+    
+    @UseFilters(new AllExceptionsFilter())
+    @SubscribeMessage('ice')
+    async handleIce(@ConnectedSocket() client : Socket, @MessageBody() iceBody: { ice: string , chat_id:string , sender_id:string}): Promise<any> {
+        const {ice,chat_id,sender_id} = iceBody;
+
+        if(this.chatRooms.has(chat_id)){
+            const userIdSocketMap : Map<String,String> = this.chatRooms.get(chat_id);
+            for(const [socketId,userId] of userIdSocketMap){
+                if (socketId !== client.id) {
+                    const recipientSocket = this.connectedUsers.get(socketId);
+                    if(recipientSocket)
+                        recipientSocket.emit('ice', { ice, sender_id, chat_id });
+                }
+            }
+        }
+    }
+    @UseFilters(new AllExceptionsFilter())
+    @SubscribeMessage('sendIceCandidate')
+    async handleIceCandidate(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() iceBody: { iceCandidate: RTCIceCandidate, chat_id: string, sender_id: string }
+    ): Promise<any> {
+        const { iceCandidate, chat_id, sender_id } = iceBody;
+
+        if (this.chatRooms.has(chat_id)) {
+            const userIdSocketMap: Map<String, String> = this.chatRooms.get(chat_id);
+            for (const [socketId, userId] of userIdSocketMap) {
+                if (socketId !== client.id) {
+                    const recipientSocket = this.connectedUsers.get(socketId);
+                    if (recipientSocket) {
+                        recipientSocket.emit('receiveIceCandidate', { iceCandidate });
+                    }
+                }
+            }
+        }
+    }
+
 
 
     private extractTokenFromHeader(client: Socket): string {
