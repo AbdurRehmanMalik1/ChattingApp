@@ -75,14 +75,49 @@
   </head>
 
   <body style="width: 100%;">
+    <h1>Audio Here</h1>
+    <video id="camera" autoplay playsinline style="width: 100%; max-width: 500px; display: block;"></video>
+    </video>
+    <button id="open-video-button">Open Video</button>
+    <button id ="close-video-button">Close Video</button>
     <form style="width: 100%;">
         <div>
             <input type="text" id = "message-box"/>
-            <input type="text" id = "receiver-id-box"/>
             <button type="button" onclick="sendMessage()"> Message</button>
         </div>
     </form>
     <div class="message-area" id="message-area">
     </div>
+
+    <script>
+      const videoElement = document.getElementById('camera');
+      document.getElementById('open-video-button').addEventListener('click',()=>{
+        openVideo();
+      })
+      document.getElementById('close-video-button').addEventListener('click',()=>{
+        closeVideo();
+      })
+      function closeVideo(){
+        const stream = videoElement.srcObject;
+        stream.getTracks().forEach(track => track.stop());
+      }
+      function openVideo(){
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+          // Handle the media stream
+          videoElement.srcObject = stream;
+        })
+        .catch(error => {
+          if (error.name === 'NotAllowedError') {
+            alert("Permissions are required to access your camera and microphone.");
+          } else if (error.name === 'NotFoundError') {
+            alert("No media devices found.");
+          } else {
+            console.error("Error accessing media devices:", error);
+          }
+        });
+      }
+      
+    </script>
   </body>
 </html>
