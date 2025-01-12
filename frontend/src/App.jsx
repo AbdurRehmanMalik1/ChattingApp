@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
-import './css/index.css'; 
-import './css/form.css';
+import './css/App.css'
 
 const App = () => {
   const [isLogin, setIsLogin] = useState(true); 

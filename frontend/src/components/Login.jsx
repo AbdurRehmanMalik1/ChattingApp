@@ -11,8 +11,7 @@ const Login = ({ toggleForm }) => {
     <div className="background app-theme-primary">
         <div className="login-container app-theme-secondary">
           <div className="logo">🎧 ChatSphere</div>
-          <h2>Welcome Back!</h2>
-          
+          <h2 style={{marginBottom:"10px"}}>Welcome Back!</h2>
           <form className="login-form">
             {['email','password'].map((value,index)=>{
               return <div className="login-form-row">
