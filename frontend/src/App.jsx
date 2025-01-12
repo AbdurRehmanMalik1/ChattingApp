@@ -11,12 +11,12 @@ const App = () => {
   };
 
   return (
-    <div>
-      {isLogin ? (
-        <Login toggleForm={toggleForm} />
-      ) : (
-        <Signup toggleForm={toggleForm} />
-      )}
+    <div className="app-div">
+        {isLogin ? (
+          <Login toggleForm={toggleForm} />
+        ) : (
+          <Signup toggleForm={toggleForm} />
+        )}
     </div>
   );
 };
