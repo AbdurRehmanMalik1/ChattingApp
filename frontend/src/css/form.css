@@ -20,6 +20,11 @@ h2 {
     row-gap: 12px;
     height: 20rem;
   }
+  .login-form{
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+  }
   .login-form-row{
     display: flex;
     flex-direction:column;
@@ -41,11 +46,6 @@ h2 {
     flex-direction: column;
     width: 100%;
     background-color: inherit;
-  }
-  .login-form{
-    display: flex;
-    flex-direction: column;
-    row-gap: 10px;
   }
   label {
     text-align: left;

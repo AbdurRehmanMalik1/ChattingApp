@@ -3,24 +3,26 @@ import '../css/index.css';
 import '../css/form.css';
 
 const Login = ({ toggleForm }) => {
+  function capitalizeFirstLetter(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
   return (
     <div className="background app-theme-primary">
         <div className="login-container app-theme-secondary">
           <div className="logo">🎧 ChatSphere</div>
           <h2>Welcome Back!</h2>
+          
           <form className="login-form">
-            <div className="login-form-row">
-              <label htmlFor="email">Email</label>
-              <input type="email" id="email" required />
-            </div>
-            <div className="login-form-row">
-              <label htmlFor="password">Password</label>
-              <input type="password" id="password" required />
-            </div>
-            <div className="link-container">
+            {['email','password'].map((value,index)=>{
+              return <div className="login-form-row">
+                <label style={{textAlign:"center"}} htmlFor={value}>{capitalizeFirstLetter(value)}</label>
+                <input type={value} id={value} name={value}/>
+              </div>
+            })}
+            <div style={{textAlign:"center"}} className="link-container">
               <a href="#">Forgot password?</a>
             </div>
-
             <button type="submit" className="btn">Log In</button>
           </form>
 
