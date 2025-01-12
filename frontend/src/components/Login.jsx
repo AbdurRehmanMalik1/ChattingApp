@@ -5,16 +5,15 @@ import '../css/form.css';
 const Login = ({ toggleForm }) => {
   return (
     <div className="background app-theme-primary">
-      <div>
-        <div className="form-container app-theme-secondary">
+        <div className="login-container app-theme-secondary">
           <div className="logo">🎧 ChatSphere</div>
           <h2>Welcome Back!</h2>
           <form className="login-form">
-            <div>
+            <div className="login-form-row">
               <label htmlFor="email">Email</label>
               <input type="email" id="email" required />
             </div>
-            <div>
+            <div className="login-form-row">
               <label htmlFor="password">Password</label>
               <input type="password" id="password" required />
             </div>
@@ -42,7 +41,7 @@ const Login = ({ toggleForm }) => {
             </button>
           </p>
         </div>
-      </div>
+      
     </div>
   );
 };
