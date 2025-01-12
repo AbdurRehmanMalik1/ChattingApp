@@ -1,0 +1,79 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  color: #ccc;
+  margin-bottom: 20px;
+}
+.form-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(24, 24, 28, 0.9);
+    padding: 50px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
+  
+  .signup-form {
+    background-color: rgba(24, 24, 28, 0.9);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 450px;
+    padding: 40px;
+  }
+  
+  label {
+    display: block;
+    text-align: left;
+    color: #ccc;
+    margin-bottom: 5px;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background: #2f3136;
+    color: #fff;
+  }
+  
+  p {
+    color: #ccc;
+    margin-top: 10px;
+  }
+  
+  .link-container {
+    text-align: left;
+    margin-bottom: 15px;
+  }
+  
+  .link-container a {
+    color: #5865f2;
+    text-decoration: none;
+  }
+  
+  .link-container a:hover {
+    text-decoration: underline;
+  }  
+  
+  .dob {
+    display: flex;
+    gap: 10px;
+  }
+  .link{
+    text-align: right;
+  }
+  
