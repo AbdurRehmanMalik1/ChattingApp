@@ -1,4 +1,4 @@
-import { ArgumentsHost, BadRequestException, Catch, HttpStatus, Injectable, UnauthorizedException, UseFilters, UseGuards } from '@nestjs/common';
+import { ArgumentsHost, BadRequestException, Catch, HttpStatus, Injectable, UnauthorizedException, UseFilters, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { BaseWsExceptionFilter, ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io'
@@ -8,6 +8,9 @@ import { Chat } from 'src/chat/chat-model';
 import { ChatService } from 'src/chat/chat-service';
 import { Message } from 'src/chat/message-model';
 import { MessageService } from 'src/chat/message-service';
+import { JoinMultipleRoomsDto } from 'src/dto/join-multiple-room-dto';
+import { JoinRoomDto } from 'src/dto/join-room-dto';
+
 
 
 @Catch(UnauthorizedException, BadRequestException)
@@ -33,6 +36,7 @@ export class AllExceptionsFilter extends BaseWsExceptionFilter {
       origin: '*',
     },
 })
+@UseFilters(new AllExceptionsFilter())
 @Injectable()
 export class EventsGateway {
     @WebSocketServer()
@@ -41,211 +45,125 @@ export class EventsGateway {
         readonly chatService:ChatService,
         readonly messageService:MessageService,
         readonly jwtService :JwtService,
-    ){}
-    //user socket and socket_id
-    private connectedUsers: Map<String, Socket> = new Map();
-    //Chat Room Id , Key Value of Pair of User ID with their socket id
-    private chatRooms : Map<string, Map<string,string>> = new Map(); 
-
-
-
-    @UseFilters(new AllExceptionsFilter())
-    async handleConnection(client: Socket, ...args: any[]) {
+    ){
+    }
+    async handleConnection(client: Socket) {
         const token = this.extractTokenFromHeader(client);
         if (!token) {
-          client.emit('unauthorized', {status:HttpStatus.UNAUTHORIZED, message: 'JWT token missing' });
-          client.disconnect();
-          return;
+            client.emit('unauthorized', { status: HttpStatus.UNAUTHORIZED, message: 'JWT token missing' });
+            client.disconnect();
+            return;
         }
+    
         try {
-          const payload = await this.jwtService.verifyAsync(token, {
-            secret: jwtConstants.secret,
-          });
-          client['user'] = payload;
+            const payload = await this.jwtService.verifyAsync(token, {
+                secret: jwtConstants.secret,
+            });
+            client['user'] = payload;
         } catch (error) {
-          client.emit('unauthorized', {status:HttpStatus.UNAUTHORIZED, message: 'Invalid JWT Token' });
-          client.disconnect();
-          return;
+            client.emit('unauthorized', { status: HttpStatus.UNAUTHORIZED, message: 'Invalid JWT Token' });
+            client.disconnect();
+            return;
         }
         console.log(`Client connected: ${client.id}`);
-        this.connectedUsers.set(client.id, client); // Add the socket to the list
     }
-
-    @UseFilters(new AllExceptionsFilter())
-    handleDisconnect(client: Socket) {
+    
+    async handleDisconnect(client: Socket) {
         console.log(`Client disconnected: ${client.id}`);
-        // Iterate through chatRooms to find the chat the client belongs to
-        this.chatRooms.forEach((userIdSocketMap: Map<string, string>, chatId: string) => {
-            // If the client is part of the current chat room
-            if (userIdSocketMap.has(client.id)) {
-                console.log(`Client ${client.id} is part of chat room ${chatId}. Removing...`);
-                userIdSocketMap.delete(client.id);  // Remove the client from the room
-            }
-        });
-        // Remove from the connected users map
-        this.connectedUsers.delete(client.id);  // Remove the socket from the list
-        console.log(`Client ${client.id} removed from connected users list.`);
+        // Socket.IO handles room cleanup automatically
     }
 
-
-    @UseFilters(new AllExceptionsFilter())
-    @SubscribeMessage('sendAdditionalInfo')
-    async handleRetrieveInfo(@ConnectedSocket() client : Socket , @MessageBody() data: { sender_id: string,chat_id:string }): Promise<any> {
-        // console.log('Retrieve additional info for user:');
-        // console.log(data);
-        const {sender_id , chat_id} = data;
-        if (!sender_id || !chat_id) {
-            console.error('Invalid data received:', data);
-            return { error: 'Invalid data' };
-        }        
-        if(!this.chatRooms.get(chat_id)){
-            const userIdSocketMap : Map<string, string> = new Map();//socketids with users
-            userIdSocketMap.set(
-                client.id,
-                sender_id,
-            );
-            this.chatRooms.set(chat_id , userIdSocketMap);
-        }else{
-            const userIdSocketMap : Map<string, string> =  this.chatRooms.get(chat_id);
-            userIdSocketMap.set(
-                client.id,
-                sender_id,
-            );
-        }
+    @SubscribeMessage('joinRoom')
+    handleJoinRoom(
+        @ConnectedSocket() client: Socket, 
+        @MessageBody(new ValidationPipe({ whitelist: true })) data: JoinRoomDto
+    ) {
+      const { chatId } = data;
+      client.join(chatId);
+      console.log(`Client ${client.id} joined room: ${chatId}`);
     }
 
-    @UseFilters(new AllExceptionsFilter())
-    @SubscribeMessage('events')
-    async handleEvent(@MessageBody() eventBody: { message: Message , chat_id:string}): Promise<any> {
-        await this.chatService.arePartOfChat(
-            eventBody.chat_id,
-            eventBody.message.sender_id,
-            eventBody.message.receiver_id
-        );
-        return eventBody;
+    @SubscribeMessage('joinMultipleRooms')
+    handleJoinMultipleRooms(
+        @ConnectedSocket() client: Socket, 
+        @MessageBody(new ValidationPipe({ whitelist: true })) data: JoinMultipleRoomsDto,
+    ) {
+      const { chatIds } = data;
+      chatIds.forEach((chatId:string)=>{
+        client.join(chatId);
+        console.log(`Client ${client.id} joined room: ${chatId}`);
+      });
     }
 
-
-    @UseFilters(new AllExceptionsFilter())
-    @UseGuards(WsJwtAuthGuard)
+    
     @SubscribeMessage('send-message')
-    async handleSendMessage(@ConnectedSocket() client : Socket , @MessageBody() messagePayLoad: { message: Message , chat_id:string}): Promise<any> {
-        const {content, sender_id , receiver_id, message_type} = messagePayLoad.message;
-        const chat_id : string = messagePayLoad.chat_id;
-        await this.chatService.arePartOfChat(
-            chat_id,
-            sender_id,
-            receiver_id
+    async handleSendMessage(@ConnectedSocket() client: Socket, @MessageBody() payload: { chatId: string, message: Message }) {
+        const { chatId, message } = payload;
+        await this.chatService.arePartOfChat(chatId, message.sender_id, message.receiver_id);
+        const createdMessage : Message = await this.messageService.createMessage(
+            message.message_type || 'text',
+            message.content,
+            message.sender_id,
+            message.receiver_id,
         );
-        if(!content)
-            5;
-            //add emit incase of error
-        const createdMessage  : Message = await this.messageService.createMessage(
-            message_type || 'text',
-            content,
-            sender_id,
-            receiver_id
-        );
-        const updatedChat : Chat= await this.chatService.sendMessage(chat_id , createdMessage);
-        //console.log("Updated Chat")
-        // console.log(updatedChat);
-
-        const userIdSocketMap = this.chatRooms.get(chat_id); // Assuming this is a Map of chat rooms and user socket mappings
-
-        if (userIdSocketMap) {
-            for (const [socketId, userId] of userIdSocketMap) {
-                if (socketId !== client.id) {
-                    const recipientSocket = this.connectedUsers.get(socketId);
-                    if (recipientSocket) {
-                        // Emit the message to the recipient's socket
-                        recipientSocket.emit('newMessage', {
-                            message: createdMessage,
-                            chat_id: chat_id,
-                            sender_id: sender_id,
-                        });
-                    }
-                }
-            }
-        }
+        const senderName = this.getUserName(client);
+        this.server.to(chatId).except(client.id).emit('newMessage', { 
+            message: createdMessage, 
+            chatId ,
+            senderName
+        });
         return createdMessage;
     }
     
-
-    @UseFilters(new AllExceptionsFilter())
     @SubscribeMessage('offer')
-    async handleCallOffer(@ConnectedSocket() client : Socket, @MessageBody() offerBody: { offerSdp: string , chat_id:string , sender_id:string}): Promise<any> {
-        const {offerSdp,chat_id,sender_id} = offerBody;
-
-        if(this.chatRooms.has(chat_id)){
-            const userIdSocketMap : Map<String,String> = this.chatRooms.get(chat_id);
-            for(const [socketId,userId] of userIdSocketMap){
-                if (socketId !== client.id) {
-                    const recipientSocket = this.connectedUsers.get(socketId);
-                    if(recipientSocket)
-                        recipientSocket.emit('offer', { offerSdp, sender_id, chat_id });
-                }
-            }
-        }
-    }
-    @UseFilters(new AllExceptionsFilter())
-    @SubscribeMessage('answerOffer')
-    async handleAnswerOffer(@ConnectedSocket() client : Socket, @MessageBody() offerBody: { answerSdp: string , chat_id:string , sender_id:string}): Promise<any> {
-        const {answerSdp,chat_id,sender_id} = offerBody;
-
-        if(this.chatRooms.has(chat_id)){
-            const userIdSocketMap : Map<String,String> = this.chatRooms.get(chat_id);
-            for(const [socketId,userId] of userIdSocketMap){
-                if (socketId !== client.id) {
-                    const recipientSocket = this.connectedUsers.get(socketId);
-                    if(recipientSocket)
-                        recipientSocket.emit('answerOffer', { answerSdp, sender_id, chat_id });
-                }
-            }
-        }
-    }
-    
-    @UseFilters(new AllExceptionsFilter())
-    @SubscribeMessage('ice')
-    async handleIce(@ConnectedSocket() client : Socket, @MessageBody() iceBody: { ice: string , chat_id:string , sender_id:string}): Promise<any> {
-        const {ice,chat_id,sender_id} = iceBody;
-
-        if(this.chatRooms.has(chat_id)){
-            const userIdSocketMap : Map<String,String> = this.chatRooms.get(chat_id);
-            for(const [socketId,userId] of userIdSocketMap){
-                if (socketId !== client.id) {
-                    const recipientSocket = this.connectedUsers.get(socketId);
-                    if(recipientSocket)
-                        recipientSocket.emit('ice', { ice, sender_id, chat_id });
-                }
-            }
-        }
-    }
-    @UseFilters(new AllExceptionsFilter())
-    @SubscribeMessage('sendIceCandidate')
-    async handleIceCandidate(
+    handleCallOffer(
         @ConnectedSocket() client: Socket,
-        @MessageBody() iceBody: { iceCandidate: RTCIceCandidate, chat_id: string, sender_id: string }
-    ): Promise<any> {
-        const { iceCandidate, chat_id, sender_id } = iceBody;
+        @MessageBody() offerBody: { offerSdp: string; chatId: string }
+    ): void {
+        const senderId = this.getUserId(client);
+        
+        const { offerSdp, chatId } = offerBody;
 
-        if (this.chatRooms.has(chat_id)) {
-            const userIdSocketMap: Map<String, String> = this.chatRooms.get(chat_id);
-            for (const [socketId, userId] of userIdSocketMap) {
-                if (socketId !== client.id) {
-                    const recipientSocket = this.connectedUsers.get(socketId);
-                    if (recipientSocket) {
-                        recipientSocket.emit('receiveIceCandidate', { iceCandidate });
-                    }
-                }
-            }
-        }
+        client.to(chatId).emit('offer', { offerSdp, senderId, chatId });
     }
 
+    @SubscribeMessage('answerOffer')
+    handleAnswerOffer(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() offerBody: { answerSdp: string; chatId: string }
+    ): void {
+        const senderId = this.getUserId(client);
+        const { answerSdp, chatId } = offerBody;
 
+        // Emit the answer offer to the chat room
+        client.to(chatId).emit('answerOffer', { answerSdp, senderId, chatId });
+    }
+
+    @SubscribeMessage('sendIceCandidate')
+    handleIceCandidate(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() iceBody: { iceCandidate: RTCIceCandidateInit; chatId: string }
+    ): void {
+        const senderId = this.getUserId(client);
+        const { iceCandidate, chatId } = iceBody;
+
+
+        client.to(chatId).emit('receiveIceCandidate', { iceCandidate, senderId, chatId });
+        console.log(`Sending ICE candidate from ${senderId} to ${chatId}`);
+    }
 
     private extractTokenFromHeader(client: Socket): string {
         const authHeadertoken = client.handshake.auth.token;
         return authHeadertoken ? authHeadertoken.split(' ')[1] : null;
+    }
+    private getUserId(client: Socket): string {
+        return client['user']?.sub;  
+    }
+    private getUserName(client: Socket): string {
+        return client['user']?.name;  
+    }
+    private getUserEmail(client: Socket): string {
+        return client['user']?.email;  
     }
 }
 

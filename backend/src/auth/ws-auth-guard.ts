@@ -28,8 +28,8 @@ export class WsJwtAuthGuard implements CanActivate {
 
     return true;
   }
-
-   private extractTokenFromHeader(client: Socket): string {
+  
+  private extractTokenFromHeader(client: Socket): string {
       const authHeadertoken = client.handshake.auth.token;
       return authHeadertoken ? authHeadertoken.split(' ')[1] : null;
   }
