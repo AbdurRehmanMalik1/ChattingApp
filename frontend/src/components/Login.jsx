@@ -8,7 +8,7 @@ const Login = ({ toggleForm }) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
   return (
-    <div className="background app-theme-primary">
+    
         <div className="login-container app-theme-secondary">
           <div className="logo">🎧 ChatSphere</div>
           <h2 style={{marginBottom:"10px"}}>Welcome Back!</h2>
@@ -43,7 +43,7 @@ const Login = ({ toggleForm }) => {
           </p>
         </div>
       
-    </div>
+    
   );
 };
 
