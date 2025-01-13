@@ -11,26 +11,41 @@ import { MessageService } from 'src/chat/message-service';
 import { JoinMultipleRoomsDto } from 'src/dto/join-multiple-room-dto';
 import { JoinRoomDto } from 'src/dto/join-room-dto';
 
-
-
-@Catch(UnauthorizedException, BadRequestException)
+@Catch(UnauthorizedException, BadRequestException, WsException)
 export class AllExceptionsFilter extends BaseWsExceptionFilter {
   catch(exception: WsException, host: ArgumentsHost) {
     const client = host.switchToWs().getClient();
     
+    // Check if exception is an instance of UnauthorizedException
     if (exception instanceof UnauthorizedException) {
-      client.emit('unauthorized', { status:HttpStatus.UNAUTHORIZED, message: 'Unauthorized access. Please check your credentials.' });
-      client.disconnect();
-    } else if (exception instanceof BadRequestException) {
-      client.emit('exception', { status:HttpStatus.BAD_REQUEST, message: 'Please check your input.' });
+      client.emit('unauthorized', {
+        status: HttpStatus.UNAUTHORIZED,
+        message: 'Unauthorized access. Please check your credentials.',
+      });
+      client.disconnect(); // Optional: disconnect the client if unauthorized
     }
-
-    // Suppress the console log or handle the error without logging
-    // Do not propagate the exception further or log it to the console
-    return; // Return early to avoid logging it
+    
+    // Check if exception is an instance of BadRequestException
+    else if (exception instanceof BadRequestException) {
+      const response = exception.getResponse(); // Get the response from BadRequestException
+      client.emit('exception', {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Bad Request. Please check your input.',
+        errors: response['message'] || [],
+      });
+    }
+    
+    // Handle WsException without calling getError
+    else if (exception instanceof WsException) {
+      const response = exception.getError(); // This should work now without errors
+      client.emit('exception', {
+        status: HttpStatus.BAD_REQUEST,
+        message: 'A WebSocket error occurred.',
+        errors: response || [],
+      });
+    }
   }
 }
-
 @WebSocketGateway({
     cors: {
       origin: '*',
@@ -76,7 +91,7 @@ export class EventsGateway {
     @SubscribeMessage('joinRoom')
     handleJoinRoom(
         @ConnectedSocket() client: Socket, 
-        @MessageBody(new ValidationPipe({ whitelist: true })) data: JoinRoomDto
+        @MessageBody(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) data: JoinRoomDto
     ) {
       const { chatId } = data;
       client.join(chatId);
@@ -86,7 +101,7 @@ export class EventsGateway {
     @SubscribeMessage('joinMultipleRooms')
     handleJoinMultipleRooms(
         @ConnectedSocket() client: Socket, 
-        @MessageBody(new ValidationPipe({ whitelist: true })) data: JoinMultipleRoomsDto,
+        @MessageBody(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) data: JoinMultipleRoomsDto,
     ) {
       const { chatIds } = data;
       chatIds.forEach((chatId:string)=>{
