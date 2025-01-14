@@ -1,18 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import './css/App.css'
 import Chat from "./components/Chat";
-
+import ChattingNav from "./components/ChattingNav";
 const App = () => {
+  
   const [isLogin, setIsLogin] = useState(true); 
   const toggleForm = () => {
     setIsLogin(!isLogin);
   };
 
-  const chats = [];
-  async function getUserChats(){
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzdlNDdlYjQ3YzQ3YmE3YTM5YjlhMmUiLCJuYW1lIjoiQWJkdXIgUmVobWFuIiwiZW1haWwiOiJhYmR1cnJlaG1hbjQ0MTVAZ21haWwuY29tIiwiaWF0IjoxNzM2ODYyNzUzLCJleHAiOjE3MzY4Njk5NTN9.Ts7OIvl3rQ7VCjrgJiT54PMrshKCe76mOedezda1aBQ";
+
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  const getUserChats = async () => {
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzdlNDdlYjQ3YzQ3YmE3YTM5YjlhMmUiLCJuYW1lIjoiQWJkdXIgUmVobWFuIiwiZW1haWwiOiJhYmR1cnJlaG1hbjQ0MTVAZ21haWwuY29tIiwiaWF0IjoxNzM2ODcyODE3LCJleHAiOjE3MzY4ODAwMTd9.EyZBrtTB39RzeIEpHC3f1btKZj7OvPtvBSEOxsyZKcg";
     const bearerToken = `Bearer ${token}`
     try {
         const response = await fetch('http://localhost:8080/chat/my', {
@@ -27,12 +31,15 @@ const App = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(data);
+        setChats(data);
       } catch (error) {
         console.error("Error fetching user chats:", error);
       }
   }
-  getUserChats();
+  useEffect(() => {
+    getUserChats();
+  }, []);
+
   return (
     // <div className="app-div">
     //     {isLogin ? (
@@ -41,8 +48,10 @@ const App = () => {
     //       <Signup toggleForm={toggleForm} />
     //     )}
     // </div>
-
-    <Chat/>
+    <>
+      <ChattingNav chats={chats}/>
+      <Chat/>
+    </>
   );
 };
 
