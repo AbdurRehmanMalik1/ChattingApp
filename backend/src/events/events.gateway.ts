@@ -65,7 +65,7 @@ export class EventsGateway {
     async handleConnection(client: Socket) {
         const token = this.extractTokenFromHeader(client);
         if (!token) {
-            client.emit('unauthorized', { status: HttpStatus.UNAUTHORIZED, message: 'JWT token missing' });
+            client.emit('exception', { status: HttpStatus.UNAUTHORIZED, message: 'JWT token missing' });
             client.disconnect();
             return;
         }
@@ -76,7 +76,7 @@ export class EventsGateway {
             });
             client['user'] = payload;
         } catch (error) {
-            client.emit('unauthorized', { status: HttpStatus.UNAUTHORIZED, message: 'Invalid JWT Token' });
+            client.emit('exception', { status: HttpStatus.UNAUTHORIZED, message: 'Invalid JWT Token' });
             client.disconnect();
             return;
         }
@@ -91,8 +91,8 @@ export class EventsGateway {
     @SubscribeMessage('joinRoom')
     handleJoinRoom(
         @ConnectedSocket() client: Socket, 
-        @MessageBody(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) data: JoinRoomDto
-    ) {
+        @MessageBody(new ValidationPipe({whitelist: true, forbidNonWhitelisted: true, })) data: JoinRoomDto) 
+    {
       const { chatId } = data;
       client.join(chatId);
       console.log(`Client ${client.id} joined room: ${chatId}`);
@@ -101,7 +101,7 @@ export class EventsGateway {
     @SubscribeMessage('joinMultipleRooms')
     handleJoinMultipleRooms(
         @ConnectedSocket() client: Socket, 
-        @MessageBody(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) data: JoinMultipleRoomsDto,
+        @MessageBody(new ValidationPipe({whitelist: true, forbidNonWhitelisted: true, })) data: JoinMultipleRoomsDto,
     ) {
       const { chatIds } = data;
       chatIds.forEach((chatId:string)=>{
