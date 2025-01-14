@@ -41,17 +41,15 @@ const App = () => {
   }, []);
 
   return (
-    // <div className="app-div">
-    //     {isLogin ? (
-    //       <Login toggleForm={toggleForm} />
-    //     ) : (
-    //       <Signup toggleForm={toggleForm} />
-    //     )}
-    // </div>
-    <>
-      <ChattingNav chats={chats}/>
-      <Chat/>
-    </>
+    <div className="app-div">
+      <div className="background app-theme-primary">
+        {isLogin ? (
+          <Login toggleForm={toggleForm} />
+        ) : (
+          <Signup toggleForm={toggleForm} />
+        )}
+        </div>
+      </div>
   );
 };
 

@@ -24,7 +24,7 @@ const Signup = ({ toggleForm }) => {
   }, []);
 
   return (
-    <div className="background app-theme-primary">
+    
         <div className="signup-container app-theme-secondary">
           <div className="logo">🎧 ChatSphere</div>
           <h2>Create Your Account</h2>
@@ -114,7 +114,6 @@ const Signup = ({ toggleForm }) => {
             </button>
           </p>
         </div>
-    </div>
   );
 };
 
