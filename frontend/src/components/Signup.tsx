@@ -1,30 +1,33 @@
 import React, { useEffect } from "react";
 import '../css/index.css';
 import '../css/form.css';
+import { useNavigate } from "react-router-dom";
 
-const Signup = ({ toggleForm }) => {
+const Signup = () => {
+  const navigate = useNavigate(); 
+  
   useEffect(() => {
     const daySelect = document.getElementById("dob-day");
     const yearSelect = document.getElementById("dob-year");
 
     for (let i = 1; i <= 31; i++) {
       const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      daySelect.appendChild(option);
+      option.value = i.toString();
+      option.textContent = i.toString();
+      daySelect?.appendChild(option);
     }
 
     const currentYear = new Date().getFullYear();
     for (let i = currentYear; i >= 1900; i--) {
       const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      yearSelect.appendChild(option);
+      option.value = i.toString();
+      option.textContent = i.toString();
+      yearSelect?.appendChild(option);
     }
   }, []);
 
   return (
-    
+    <div className="background app-theme-primary">
         <div className="signup-container app-theme-secondary">
           <div className="logo">🎧 ChatSphere</div>
           <h2>Create Your Account</h2>
@@ -101,7 +104,7 @@ const Signup = ({ toggleForm }) => {
           <p>
             Already have an account?{" "}
             <button
-              onClick={toggleForm}
+              onClick={()=>navigate('/login')}
               style={{
                 color:' #5865f2',
                 background: "none",
@@ -114,6 +117,7 @@ const Signup = ({ toggleForm }) => {
             </button>
           </p>
         </div>
+    </div>
   );
 };
 

@@ -18,72 +18,70 @@ h2 {
     display: flex;
     flex-direction: column;
     row-gap: 12px;
-    height: 20rem;
-  }
-  .login-form{
-    display: flex;
-    flex-direction: column;
-    row-gap: 10px;
-  }
-  .login-form-row{
-    display: flex;
-    flex-direction:column;
-    row-gap:2px;
-  }
-  .signup-container {
-    margin-top: auto;
-    margin-bottom: auto;
-    background: rgba(24, 24, 28, 0.9);
-    padding: 50px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    row-gap: 12px;
-    height: 38rem;
-  }
-  .signup-form{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    background-color: inherit;
-    row-gap: 5px;
-  }
-  label {
-    text-align: left;
-    color: #ccc;
-  }
-  input, select {
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    background: #2f3136;
-    color: #fff;
-  }
-  
-  p {
-    color: #ccc;
-  }
-  
-  .link-container {
-    text-align: left;
-  }
-  
-  .link-container a {
-    color: #5865f2;
-    text-decoration: none;
-  }
-  
-  .link-container a:hover {
-    text-decoration: underline;
-  }  
-  
-  .dob {
-    display: flex;
-    gap: 10px;
-  }
-  .link{
-    text-align: right;
-  }
-  
+}
+.login-form{
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+.login-form-row{
+  display: flex;
+  flex-direction:column;
+  row-gap:2px;
+}
+.signup-container {
+  margin-top: auto;
+  margin-bottom: auto;
+  background: rgba(24, 24, 28, 0.9);
+  padding: 50px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+}
+.signup-form{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: inherit;
+  row-gap: 5px;
+}
+label {
+  text-align: left;
+  color: #ccc;
+}
+input, select {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background: #2f3136;
+  color: #fff;
+}
+
+p {
+  color: #ccc;
+}
+
+.link-container {
+  text-align: left;
+}
+
+.link-container a {
+  color: #5865f2;
+  text-decoration: none;
+}
+
+.link-container a:hover {
+  text-decoration: underline;
+}  
+
+.dob {
+  display: flex;
+  gap: 10px;
+}
+.link{
+  text-align: right;
+}
+
