@@ -7,12 +7,18 @@ import { Message } from "./message-model";
 
 @Injectable()
 export class ChatService {
+    
     constructor(
         @InjectModel('User') private userModel: Model<User>,
         @InjectModel('Chat') private chatModel: Model<Chat>,
         @InjectModel('Message') private messageModel: Model<Message>
     ) {}
-    
+    getMyChats(userId: String) : Promise<Chat[]>{
+        return this.chatModel.find(
+        {
+            participants: {$in: [userId]}
+        });
+    }
     async sendMessage(chat_id: string, createdMessage: Message): Promise<Chat> {
         // const chat = await this.chatModel.findById(chat_id);
         // if (!chat) {

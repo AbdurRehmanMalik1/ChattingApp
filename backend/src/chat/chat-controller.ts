@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, HttpStatus, Param, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Request, UseGuards } from "@nestjs/common";
 import { UserService } from "src/user/user-service";
 import { ChatService } from "./chat-service";
 import { MessageService } from "./message-service";
@@ -6,7 +6,7 @@ import { Message } from "./message-model";
 import { User } from "src/user/user-model";
 import { Chat, ChatType } from "./chat-model";
 import { Types } from "mongoose";
-import { Http2ServerResponse } from "http2";
+import { AuthGuard } from "src/auth/auth-guard";
 
 
 
@@ -17,6 +17,15 @@ export class ChatController{
         private readonly chatService :ChatService,
         private readonly messageService:MessageService,
     ) {}
+
+    @UseGuards(AuthGuard)
+    @HttpCode(HttpStatus.OK)
+    @Get('/my')
+    public getMyChats(@Request() req){
+        const userId : String= req.user?.sub;
+        return this.chatService.getMyChats(userId);
+    }
+
     @Post("/send-message")
     async sendMessage(@Body() message:{
         chat_id : string,
