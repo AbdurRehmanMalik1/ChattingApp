@@ -13,8 +13,6 @@ import { UserService } from './user-service';
 import { User } from './user-model';
 import { AuthGuard } from 'src/auth/auth-guard';
 
-
-
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

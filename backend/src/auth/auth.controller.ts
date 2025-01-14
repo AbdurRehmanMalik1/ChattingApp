@@ -2,6 +2,9 @@ import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post } fro
 import { AuthService } from './auth.service';
 import { User } from 'src/user/user-model';
 import { JwtService } from '@nestjs/jwt';
+import { MessageBody } from '@nestjs/websockets';
+import { SignInDto } from 'src/dto/signin-dto';
+import { SignUpDto } from 'src/dto/signup-dto';
 
 function isNullOrEmpty(value: string | null | undefined): boolean {
     return !value || value.trim().length === 0;
@@ -13,17 +16,9 @@ export class AuthController {
     private authService: AuthService,
     private jwtService: JwtService) {}
 
-
-
     @HttpCode(HttpStatus.OK)
-    @Post('/login') async signIn(
-        @Body() signInCredentials: { 
-        email: string; 
-        password: string; })
-    {
-        const {email,password} = signInCredentials;
-        if (isNullOrEmpty(email) || isNullOrEmpty(password) ) 
-        throw new BadRequestException('Missing Sign In Fields');
+    @Post('/login') async signIn(@Body() signInDto: SignInDto){
+        const {email,password} = signInDto;
 
         const user : User = await this.authService.signIn(email,password);
 
@@ -41,31 +36,9 @@ export class AuthController {
 
   @HttpCode(HttpStatus.CREATED)
   @Post('/signup')
-  async signUp(
-    @Body() userDetails: { 
-      name: string; 
-      email: string; 
-      password: string; 
-      DoB: Date; 
-      phoneNumber: string 
-    }
-  ) {
+  async signUp(@Body() userDetails: SignUpDto) {
     const { name, email, password, DoB, phoneNumber } = userDetails;
-
-    // Validate required fields
-    if (
-      isNullOrEmpty(name) || 
-      isNullOrEmpty(email) || 
-      isNullOrEmpty(password) || 
-      isNullOrEmpty(phoneNumber) || 
-      !DoB
-    ) {
-      throw new BadRequestException(
-        'Missing required fields: name, email, password, DoB, or phoneNumber'
-      );
-    }
-
-    // Prepare user object
+    
     const userObj :any = {
       name,
       email,

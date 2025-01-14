@@ -17,8 +17,6 @@ export class ChatController{
         private readonly chatService :ChatService,
         private readonly messageService:MessageService,
     ) {}
-
-
     @Post("/send-message")
     async sendMessage(@Body() message:{
         chat_id : string,
